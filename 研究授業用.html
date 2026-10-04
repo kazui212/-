@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>理想のロボット選手権 サポートアプリ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter / Noto Sans JP -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .step-active { border-color: #0ea5e9; background-color: #f0f9ff; color: #0369a1; font-weight: 700; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        .karaoke-word {
+            transition: all 0.2s ease;
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .karaoke-active {
+            background-color: #fef08a;
+            color: #854d0e;
+            font-weight: 700;
+            transform: scale(1.08);
+        }
+        .karaoke-passed {
+            background-color: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-500 text-white p-2 rounded-lg font-bold text-xl flex items-center justify-center w-10 h-10 shadow">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">理想のロボット選手権</h1>
+                        <p class="text-xs text-slate-500">Project 2 発表・AI支援＆相互評価アプリ（自由進度学習）</p>
+                    </div>
+                </div>
+
+                <!-- Controls: Unified Auth & Account Button -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="openAuthModal()" class="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-800 transition shadow-sm">
+                        <i class="fa-solid fa-user-lock text-brand-600 text-sm"></i>
+                        <span id="currentUserLabel">生徒: 12番 井上 蓮</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] ml-1"></i>
+                    </button>
+
+                    <button onclick="openChangePasswordModal()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 transition" title="パスワード変更">
+                        <i class="fa-solid fa-key text-amber-500"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Class Navigation Bar -->
+            <div class="flex items-center justify-between border-t border-slate-100 py-1.5 text-xs overflow-x-auto">
+                <div class="flex items-center space-x-1" id="classTabsContainer">
+                    <span class="text-slate-500 font-bold px-2 whitespace-nowrap"><i class="fa-solid fa-school text-brand-500 mr-1"></i>クラス:</span>
+                    <button onclick="selectClass(1)" id="classTab1" class="class-tab px-3 py-1 rounded-md font-bold bg-brand-500 text-white transition">1組</button>
+                    <button onclick="selectClass(2)" id="classTab2" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">2組</button>
+                    <button onclick="selectClass(3)" id="classTab3" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">3組</button>
+                    <button onclick="selectClass(4)" id="classTab4" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">4組</button>
+                    <button onclick="selectClass(5)" id="classTab5" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">5組</button>
+                    <button onclick="selectClass(6)" id="classTab6" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">6組</button>
+                    <button onclick="selectClass(7)" id="classTab7" class="class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition">7組</button>
+                </div>
+
+                <div id="classLockBadge" class="flex items-center space-x-1.5 text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
+                    <i id="classLockIcon" class="fa-solid fa-lock-open text-emerald-600"></i>
+                    <span id="classLockText" class="font-medium text-[11px]">クラス切替: 自由</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
+
+        <!-- STUDENT VIEW -->
+        <div id="studentView" class="space-y-5">
+
+            <!-- Step Header Bar & Learning Status Selector -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center space-x-2">
+                        <span id="currentStepBadge" class="bg-brand-500 text-white font-bold text-xs px-2.5 py-1 rounded-full">Step 1</span>
+                        <h2 id="currentStepTitle" class="text-base font-bold text-slate-800">1. 下書きと構想メモ</h2>
+                    </div>
+
+                    <!-- Learning Help Status Bar -->
+                    <div class="flex items-center space-x-2 bg-slate-50 border border-slate-200 p-1.5 rounded-lg text-xs">
+                        <span class="font-bold text-slate-600 px-1"><i class="fa-solid fa-circle-info text-brand-500 mr-1"></i>現在の状態:</span>
+                        <select id="myHelpStatusSelect" onchange="updateMyHelpStatus(this.value)" class="bg-white border border-slate-300 font-bold rounded px-2 py-1 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
+                            <option value="順調" class="text-emerald-700 font-bold">🟢 順調！</option>
+                            <option value="ペア・音読募集" class="text-purple-700 font-bold">🟣 ペア・音読募集</option>
+                            <option value="ペア・音読可能" class="text-indigo-700 font-bold">🔵 ペア・音読可能！</option>
+                            <option value="ヒント・ヘルプ求む" class="text-amber-700 font-bold">🟡 ヒント・ヘルプ求む！</option>
+                            <option value="SOS" class="text-rose-700 font-bold">🔴 SOS！</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <span id="mySubmissionStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                            未提出
+                        </span>
+                        <span id="studentNameDisplay" class="text-xs text-slate-600 font-medium bg-slate-100 px-3 py-1 rounded-full">
+                            出席番号12番: 井上 蓮 (あなた)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 8 Steps Bar -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 text-xs">
+                    <button onclick="goToStep(1)" id="stepTab1" class="step-tab step-active p-2 text-center rounded-lg border transition">1. 構想・下書き</button>
+                    <button onclick="goToStep(2)" id="stepTab2" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">2. AIによる確認</button>
+                    <button onclick="goToStep(3)" id="stepTab3" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">3. 相互コメント</button>
+                    <button onclick="goToStep(4)" id="stepTab4" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">4. 改善・提出</button>
+                    <button onclick="goToStep(5)" id="stepTab5" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">5. 返却確認</button>
+                    <button onclick="goToStep(6)" id="stepTab6" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">6. 音読・画像</button>
+                    <button onclick="goToStep(7)" id="stepTab7" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">7. 作品投票</button>
+                    <button onclick="goToStep(8)" id="stepTab8" class="step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">8. 振り返り</button>
+                </div>
+            </div>
+
+            <!-- STEP 1: Draft Creation -->
+            <div id="stepContent1" class="step-content space-y-5">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    
+                    <!-- Left: Combined Memo Box -->
+                    <div class="lg:col-span-1 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-3">
+                        <div class="border-b pb-2 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 flex items-center text-sm">
+                                <i class="fa-solid fa-note-sticky text-amber-500 mr-2"></i>アイデア構想メモ
+                            </h3>
+                            <span class="text-[11px] text-slate-500">（日本語で整理）</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            どんなロボットを作るかメモしてみましょう。
+                        </p>
+                        <textarea id="ideaMemoInput" rows="11" oninput="saveMemoOnly()" class="w-full border border-slate-300 rounded-lg p-3 text-xs leading-relaxed focus:ring-2 focus:ring-brand-500 focus:outline-none text-slate-800" placeholder="【アイデアメモ】
+・名前：
+・いつ使うか：
+・できること：
+・できないこと：
+・役立つ理由："></textarea>
+                    </div>
+
+                    <!-- Right: Draft Input -->
+                    <div class="lg:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between border-b pb-2">
+                                <h3 class="font-bold text-slate-900 flex items-center text-sm">
+                                    <i class="fa-solid fa-pen-to-square text-brand-500 mr-2"></i>英文下書き作成
+                                </h3>
+                                <button onclick="useTemplateDraft()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded transition flex items-center">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i>テンプレ文を入れる
+                                </button>
+                            </div>
+
+                            <p class="text-xs text-slate-500">
+                                ※例文を参考に、英語で文章を入力してみましょう。
+                            </p>
+
+                            <textarea id="englishDraft" rows="8" oninput="autoSaveDraftToState()" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono leading-relaxed text-slate-800 placeholder-slate-400 placeholder:italic" placeholder="This is my ideal robot. Its name is Eco-Clean Bot. When classrooms are dirty after lunch, it can clean the floor quickly. It cannot carry heavy desks, but it helps us save cleaning time."></textarea>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between pt-3 border-t">
+                            <p class="text-xs text-slate-400">※入力内容は自動保存されます。</p>
+                            <button onclick="saveDraftAndNext(2)" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition flex items-center shadow-sm">
+                                保存して次へ: AIによる確認 <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: AI Confirmation -->
+            <div id="stepContent2" class="step-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3">
+                        <h3 class="font-bold text-slate-900 text-base flex items-center">
+                            <i class="fa-solid fa-robot text-purple-600 mr-2"></i>AIによる確認
+                        </h3>
+                        <p class="text-xs text-slate-600 font-medium mt-1">
+                            googleclassroomからwriting supporterを開いて確認してみましょう。
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-purple-50 rounded-xl border border-purple-200 flex flex-wrap items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <p class="font-bold text-purple-900 text-sm flex items-center">
+                                <i class="fa-solid fa-gem text-purple-600 mr-2"></i>Writing Supporter (Gem)
+                            </p>
+                            <p class="text-xs text-purple-800">
+                                作成した英文をコピーし、Writing Supporterでアドバイスや文法チェックを受けましょう。
+                            </p>
+                        </div>
+                        <a href="https://gemini.google.com/gem/1XY76x0y5MSv4erfUvZLIZsOvq-9sx22D?usp=sharing" target="_blank" rel="noopener noreferrer" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow flex items-center">
+                            Writing Supporterを開く <i class="fa-solid fa-arrow-up-right-from-square ml-2"></i>
+                        </a>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">あなたの作成英文プレビュー:</label>
+                            <button onclick="copyDraftToClipboard()" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center shadow-sm">
+                                <i class="fa-solid fa-copy text-brand-600 mr-1.5"></i>英文をコピー
+                            </button>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-sm font-mono text-slate-800 leading-relaxed min-h-[90px]" id="aiCheckInputPreview">
+                            (Step 1で作成した英文が表示されます)
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t">
+                        <button onclick="goToStep(1)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Step 1に戻る
+                        </button>
+                        <button onclick="goToStep(3)" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm">
+                            次へ: 相互コメント <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Peer Comments -->
+            <div id="stepContent3" class="step-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between border-b pb-3 gap-2">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base flex items-center">
+                                <i class="fa-solid fa-comments text-amber-500 mr-2"></i>ペア・クラス相互コメント
+                            </h3>
+                            <p class="text-xs text-slate-500">友達の英文を読み合い、工夫している点やアドバイスを送り合おう！</p>
+                        </div>
+                        <div class="text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <i class="fa-solid fa-paper-plane text-brand-500 mr-1"></i>送ったコメント: <span id="myCommentCount" class="font-bold text-brand-700">0</span>件
+                        </div>
+                    </div>
+
+                    <div id="peerGalleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Dynamic Peer Cards -->
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t">
+                        <button onclick="goToStep(2)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Step 2に戻る
+                        </button>
+                        <button onclick="goToStep(4)" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm">
+                            次へ: 助言をもとに推敲・先生へ提出 <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: Submission to Teacher -->
+            <div id="stepContent4" class="step-content hidden space-y-5">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div class="lg:col-span-1 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-900 border-b pb-2 flex items-center text-sm">
+                            <i class="fa-solid fa-inbox text-emerald-600 mr-2"></i>みんなからもらったコメント
+                        </h3>
+                        <div id="receivedCommentsList" class="space-y-3 max-h-80 overflow-y-auto pr-1 text-xs">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="border-b pb-2 flex items-center justify-between">
+                                <h3 class="font-bold text-slate-900 flex items-center text-sm">
+                                    <i class="fa-solid fa-file-signature text-brand-500 mr-2"></i>助言をもとに推敲・先生へ確認提出
+                                </h3>
+                                <span class="text-xs bg-brand-100 text-brand-700 font-bold px-2.5 py-0.5 rounded-full">提出用原稿</span>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">書き直した英文:</label>
+                                <textarea id="revisedEnglishText" rows="8" class="w-full border border-slate-300 rounded-lg p-3 text-sm font-mono text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed" placeholder="（Step 1の英文を友達のアドバイスをもとに書き直してみましょう）"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t flex flex-wrap items-center justify-between gap-3">
+                            <button onclick="goToStep(3)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                                <i class="fa-solid fa-arrow-left mr-1"></i>Step 3に戻る
+                            </button>
+
+                            <button onclick="submitToTeacher()" id="btnSubmitToTeacher" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition shadow-md flex items-center">
+                                <i class="fa-solid fa-paper-plane mr-2"></i>先生に確認提出する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: Teacher Confirmation -->
+            <div id="stepContent5" class="step-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base flex items-center">
+                                <i class="fa-solid fa-square-check text-emerald-600 mr-2"></i>先生の確認・返却原稿
+                            </h3>
+                            <p class="text-xs text-slate-500">先生が確認・校正した英文です。</p>
+                        </div>
+                        <span id="step5StatusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                            先生の確認待ち
+                        </span>
+                    </div>
+
+                    <div id="step5NotReturnedView" class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300 space-y-3">
+                        <i class="fa-solid fa-clock text-amber-500 text-4xl"></i>
+                        <p class="font-bold text-slate-700 text-sm">現在、先生が提出物を確認しています。</p>
+                        <p class="text-xs text-slate-500">先生から「返却」が行われると、ここに校正された完成英文が表示されます。</p>
+                    </div>
+
+                    <div id="step5ReturnedView" class="hidden space-y-4">
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 space-y-2">
+                            <p class="text-xs font-bold text-emerald-900"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>返却された英文（発表用音読原稿）:</p>
+                            <div id="correctedEnglishDisplay" class="bg-white p-3 rounded-lg border border-emerald-300 font-mono text-slate-800 text-sm leading-relaxed">
+                                (返却された英文がここに表示されます)
+                            </div>
+                        </div>
+
+                        <div id="teacherAdviceContainer" class="bg-blue-50 p-3 rounded-lg border border-blue-200 text-xs text-blue-900 space-y-1">
+                            <p class="font-bold"><i class="fa-solid fa-chalkboard-user mr-1"></i>先生からのアドバイス:</p>
+                            <p id="teacherAdviceText" class="text-slate-800">しっかりと構成を考えて書けていますね！</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t">
+                        <button onclick="goToStep(4)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Step 4に戻る
+                        </button>
+                        <button onclick="goToStep(6)" id="btnToStep6" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm flex items-center cursor-not-allowed">
+                            次へ: 音読採点・AIイラスト作成 <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: Karaoke Reading & Audio & Dynamic Image Generator -->
+            <div id="stepContent6" class="step-content hidden space-y-5">
+                
+                <div class="bg-indigo-900 text-white p-5 rounded-xl shadow-md space-y-2">
+                    <div class="flex items-center justify-between border-b border-indigo-700 pb-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-file-contract text-amber-400 text-lg"></i>
+                            <h3 class="font-bold text-sm sm:text-base">完成版 発表用英文原稿</h3>
+                        </div>
+                        <button onclick="playTtsModel()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-lg transition flex items-center">
+                            <i class="fa-solid fa-volume-high text-amber-300 mr-1.5"></i>お手本音声を聴く
+                        </button>
+                    </div>
+                    <p id="step6CompletedEnglishText" class="font-mono text-sm sm:text-base leading-relaxed text-indigo-100 py-1">
+                        (完成版英文が表示されます)
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <div class="border-b pb-2 flex items-center justify-between">
+                                <h3 class="font-bold text-slate-900 flex items-center text-sm">
+                                    <i class="fa-solid fa-microphone-lines text-rose-500 mr-2"></i>カラオケ音読判定 ＆ 録音
+                                </h3>
+                                <span class="text-xs bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full">リアルタイム採点</span>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                <p class="text-xs font-semibold text-slate-700 flex items-center">
+                                    <i class="fa-solid fa-music text-brand-500 mr-1.5"></i>カラオケハイライトガイド
+                                </p>
+                                
+                                <div id="karaokeTextContainer" class="bg-white p-3.5 rounded-lg border border-slate-300 text-sm font-mono leading-relaxed min-h-[80px]">
+                                    <!-- Dynamic spans for karaoke words -->
+                                </div>
+
+                                <div class="flex items-center space-x-2 pt-1">
+                                    <button id="btnStartKaraoke" onclick="toggleKaraokeScoring()" class="flex-1 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold py-2.5 px-3 rounded-lg text-xs sm:text-sm transition flex items-center justify-center shadow">
+                                        <i id="karaokeBtnIcon" class="fa-solid fa-microphone mr-2"></i>
+                                        <span id="karaokeBtnText">音読判定スタート</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="karaokeScoreResult" class="hidden bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-center space-y-1">
+                                <p class="text-xs font-bold text-amber-800">音読採点スコア</p>
+                                <div class="text-3xl font-black text-amber-600" id="karaokeScoreDisplay">0 点</div>
+                                <p id="karaokeScoreComment" class="text-xs text-amber-900 font-medium">しっかり発音して挑戦してみよう！</p>
+                            </div>
+
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                                <p class="text-xs font-semibold text-slate-700">発表用音声の録音と確認</p>
+                                <div class="flex items-center space-x-2">
+                                    <button id="btnRecord" onclick="toggleRecording()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center">
+                                        <i id="recordIcon" class="fa-solid fa-circle text-rose-500 mr-1.5 text-[10px]"></i><span id="recordText">マイク録音</span>
+                                    </button>
+                                    <button id="btnPlayRecord" onclick="playRecordedAudio()" disabled class="bg-slate-300 text-slate-600 font-bold py-2 px-4 rounded-lg text-xs transition flex items-center justify-center cursor-not-allowed">
+                                        <i class="fa-solid fa-play mr-1"></i>再生
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Robot Image Generation Panel -->
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between border-b pb-2 mb-3">
+                                <h3 class="font-bold text-slate-900 flex items-center text-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-purple-600 mr-2"></i>英文に沿ったAIイラスト作成
+                                </h3>
+                                <div class="flex items-center space-x-1.5">
+                                    <button onclick="generateRobotImage()" id="btnGenImage" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow flex items-center">
+                                        <i class="fa-solid fa-image mr-1"></i>イラスト生成
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-3 min-h-[220px] bg-slate-50 relative">
+                                <div id="imageLoader" class="hidden flex-col items-center space-y-2 text-purple-600 py-6 text-center">
+                                    <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                                    <p class="text-xs font-bold" id="imageLoaderText">英文テキスト内容を解析し、AIイラスト生成中...</p>
+                                </div>
+                                <img id="generatedRobotImg" onclick="openImageModal(this.src, 'あなたのロボット')" class="hidden max-h-52 rounded-lg shadow border border-slate-200 object-contain cursor-pointer hover:opacity-90 transition" alt="Generated Robot" title="クリックで拡大">
+                                <div id="imagePlaceholder" class="text-center text-slate-400 space-y-2 py-4">
+                                    <i class="fa-solid fa-robot text-4xl text-purple-400"></i>
+                                    <p class="text-xs font-semibold text-slate-600">あなたの英文をもとにロボット画像を自動生成します</p>
+                                    <p class="text-[11px] text-slate-400">（クリックで画像の全形確認・拡大表示できます）</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t">
+                            <button onclick="publishFinalWork()" id="btnPublishFinal" class="w-full bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center">
+                                <i class="fa-solid fa-cloud-arrow-up mr-2"></i>完成版としてクラスに投稿する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between pt-4 border-t bg-white p-4 rounded-xl border border-slate-200">
+                    <button onclick="goToStep(5)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                        <i class="fa-solid fa-arrow-left mr-1"></i>Step 5に戻る
+                    </button>
+                    <button onclick="goToStep(7)" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm">
+                        次へ: 完成作品ギャラリー＆3観点相互投票 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 7: Completed Gallery & 3-Criteria Voting -->
+            <div id="stepContent7" class="step-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base flex items-center">
+                                <i class="fa-solid fa-trophy text-amber-500 mr-2"></i>完成作品ギャラリー＆ベストアイデア賞 3観点相互投票
+                            </h3>
+                            <p class="text-xs text-slate-500">友達の作品画像や音声を鑑賞・視聴し、3つの観点（各1〜3点）で投票しよう！獲得した点数は合計点として集計されます。</p>
+                        </div>
+                        <div class="text-xs bg-amber-50 text-amber-900 border border-amber-200 px-3 py-1.5 rounded-lg">
+                            <i class="fa-solid fa-user-check text-amber-600 mr-1"></i>個別の投票結果は先生のみ確認可能です
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1">
+                            <span class="font-bold text-brand-700 block"><i class="fa-solid fa-hand-holding-heart mr-1"></i>観点1: 悩みに寄り添えているか</span>
+                            <p class="text-[11px] text-slate-600">学校や日常の困りごとの解決につながっているか (1~3点)</p>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1">
+                            <span class="font-bold text-purple-700 block"><i class="fa-solid fa-lightbulb mr-1"></i>観点2: 発想や工夫のよさ</span>
+                            <p class="text-[11px] text-slate-600">特徴やアイデアが独創的で工夫されているか (1~3点)</p>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1">
+                            <span class="font-bold text-emerald-700 block"><i class="fa-solid fa-comments mr-1"></i>観点3: 英語の伝わりやすさ</span>
+                            <p class="text-[11px] text-slate-600">英文のまとまりや構成、聞きやすさ (1~3点)</p>
+                        </div>
+                    </div>
+
+                    <div id="finalWorksGalleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Dynamic Final Works -->
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t bg-white">
+                        <button onclick="goToStep(6)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Step 6に戻る
+                        </button>
+                        <button onclick="goToStep(8)" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm">
+                            次へ: ３時間分の振り返り <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 8: Reflection Step -->
+            <div id="stepContent8" class="step-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-slate-900 flex items-center text-base">
+                                <i class="fa-solid fa-clipboard-user text-brand-500 mr-2"></i>単元の振り返り（３時間分の学びの記録と見返し）
+                            </h3>
+                            <p class="text-xs text-slate-500">毎時間の学びを記録し、いつでも過去の時間を振り返ることができます。</p>
+                        </div>
+                        <div class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                            <i class="fa-solid fa-book-open mr-1"></i>ポートフォリオ保存機能付き
+                        </div>
+                    </div>
+
+                    <!-- Reflection Hour Tabs -->
+                    <div class="flex flex-wrap gap-2 border-b pb-2 text-xs font-bold">
+                        <button onclick="switchReflectionHourTab(1)" id="btnRefHourTab1" class="px-3.5 py-2 rounded-lg bg-brand-500 text-white transition shadow-sm">
+                            <i class="fa-solid fa-pen-nib mr-1"></i>第1時間目（構想・アイデア）
+                        </button>
+                        <button onclick="switchReflectionHourTab(2)" id="btnRefHourTab2" class="px-3.5 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>第2時間目（推敲・アドバイス）
+                        </button>
+                        <button onclick="switchReflectionHourTab(3)" id="btnRefHourTab3" class="px-3.5 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-comments mr-1"></i>第3時間目（発表・相互評価）
+                        </button>
+                        <button onclick="switchReflectionHourTab('review')" id="btnRefHourTabReview" class="px-3.5 py-2 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition">
+                            <i class="fa-solid fa-clock-rotate-left mr-1"></i>📜 3時間分を見返す
+                        </button>
+                    </div>
+
+                    <!-- Hour 1 Input Panel -->
+                    <div id="refPanel1" class="ref-hour-panel space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-brand-900 text-sm flex items-center">
+                                <span class="bg-brand-500 text-white text-xs px-2 py-0.5 rounded mr-2">第1時</span>
+                                構想・困りごと・理想のロボットのアイデア
+                            </span>
+                            <span class="text-[11px] text-slate-500">1時間目の終わりに記入</span>
+                        </div>
+                        <p class="text-xs text-slate-600">
+                            【振り返りの視点】学校や日常生活のどんな「困りごと」に着目したか、それを解決するロボットのどんな構成・工夫を考えたか記入しましょう。
+                        </p>
+                        <textarea id="refHourText1" rows="4" class="w-full border border-slate-300 rounded-lg p-3 text-xs sm:text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none text-slate-800 leading-relaxed" placeholder="例: 昼休み後の教室清掃が大変という困り側に注目し、すばやく床を掃除できるロボットのアイデアを考えました。When... can... の型を使って理由まで整理できました。"></textarea>
+                    </div>
+
+                    <!-- Hour 2 Input Panel -->
+                    <div id="refPanel2" class="ref-hour-panel hidden space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-900 text-sm flex items-center">
+                                <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-2">第2時</span>
+                                推敲・AIヒントと友達からの助言の活用
+                            </span>
+                            <span class="text-[11px] text-slate-500">2時間目の終わりに記入</span>
+                        </div>
+                        <p class="text-xs text-slate-600">
+                            【振り返りの視点】AI（Writing Supporter）での確認や友達からもらったコメント・アドバイスを通して、自分の英文をどのように具体的に書き直せたか記入しましょう。
+                        </p>
+                        <textarea id="refHourText2" rows="4" class="w-full border border-slate-300 rounded-lg p-3 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-800 leading-relaxed" placeholder="例: Writing Supporterから「Whenのあとの主語と動詞を確認しよう」とヒントをもらい、友達からも「いつ使うか詳しく書くと伝わる」と助言をもらったので、具体的でわかりやすい英文に書き直すことができました。"></textarea>
+                    </div>
+
+                    <!-- Hour 3 Input Panel -->
+                    <div id="refPanel3" class="ref-hour-panel hidden space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-emerald-900 text-sm flex items-center">
+                                <span class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded mr-2">第3時</span>
+                                発表・音読・相互評価と成長の実感
+                            </span>
+                            <span class="text-[11px] text-slate-500">3時間目の終わりに記入</span>
+                        </div>
+                        <p class="text-xs text-slate-600">
+                            【振り返りの視点】カラオケ音読練習や友達の発表・ベストアイデア賞投票を通して、相手に伝える工夫や自分の成長、今後の目標を記入しましょう。
+                        </p>
+                        <textarea id="refHourText3" rows="4" class="w-full border border-slate-300 rounded-lg p-3 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 leading-relaxed" placeholder="例: カラオケ音読判定で何度も練習し、大きな声で自信を持って発表できました。友達の作品を見て、cannot (できないこと)の伝え方やアイデアの面白さを学べたので、今後の英語スピーチにも活かしたいです。"></textarea>
+                    </div>
+
+                    <!-- Look-back Review Portfolio Panel -->
+                    <div id="refPanelReview" class="ref-hour-panel hidden space-y-4">
+                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 space-y-1">
+                            <h4 class="font-bold text-purple-900 text-sm flex items-center">
+                                <i class="fa-solid fa-book-bookmark text-purple-600 mr-2"></i>単元全体の学びの軌跡（1〜3時間分ポートフォリオ）
+                            </h4>
+                            <p class="text-xs text-purple-800">3時間の学習での自分の成長を振り返り・比較してみましょう。</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                                <span class="bg-brand-100 text-brand-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">第1時間目: 構想・下書き</span>
+                                <p id="reviewCardHour1" class="text-slate-700 leading-relaxed whitespace-pre-wrap italic">未入力</p>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                                <span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">第2時間目: 推敲・改善</span>
+                                <p id="reviewCardHour2" class="text-slate-700 leading-relaxed whitespace-pre-wrap italic">未入力</p>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                                <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">第3時間目: 発表・相互評価</span>
+                                <p id="reviewCardHour3" class="text-slate-700 leading-relaxed whitespace-pre-wrap italic">未入力</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Feedback Box -->
+                    <div id="studentTeacherReflectionFeedbackArea" class="hidden bg-blue-50 p-3.5 rounded-xl border border-blue-200 text-xs space-y-1">
+                        <p class="font-bold text-blue-900 flex items-center">
+                            <i class="fa-solid fa-comment-medical text-blue-600 mr-1.5"></i>先生からの振り返りアドバイス・メッセージ:
+                        </p>
+                        <p id="studentTeacherReflectionFeedbackText" class="text-slate-800 leading-relaxed">成長がとても伝わる素晴らしい振り返りです！</p>
+                    </div>
+
+                    <div class="pt-3 border-t flex justify-between items-center">
+                        <button onclick="goToStep(7)" class="text-slate-600 hover:text-slate-900 font-medium text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Step 7に戻る
+                        </button>
+                        <button onclick="saveStudentReflection()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-lg text-sm transition shadow-sm flex items-center">
+                            <i class="fa-solid fa-floppy-disk mr-1.5"></i>振り返りを保存する
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TEACHER DASHBOARD VIEW -->
+        <div id="teacherView" class="hidden space-y-5">
+
+            <!-- Class Controls Bar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-chalkboard-user text-brand-600 mr-2"></i>
+                        <span id="teacherCurrentClassTitle">1組 指導ダッシュボード</span>
+                    </h2>
+                    <span id="teacherClassStudentCount" class="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-full">
+                        35名
+                    </span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openRosterModal()" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition flex items-center">
+                        <i class="fa-solid fa-users-gear mr-1.5 text-emerald-600"></i>
+                        <span>生徒名簿の編集・登録</span>
+                    </button>
+
+                    <button onclick="openTeacherPasswordsModal()" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-purple-50 text-purple-800 border border-purple-300 hover:bg-purple-100 transition flex items-center">
+                        <i class="fa-solid fa-key mr-1.5 text-purple-600"></i>
+                        <span>生徒パスワード確認</span>
+                    </button>
+
+                    <button onclick="toggleTeacherClassLock()" id="btnToggleClassLock" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition flex items-center">
+                        <i id="btnClassLockIcon" class="fa-solid fa-lock mr-1.5"></i>
+                        <span id="btnClassLockText">クラス切り替えをロックする</span>
+                    </button>
+                    <button onclick="refreshTeacherData()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i>更新
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Sub Tabs -->
+            <div class="bg-white p-2 rounded-xl border border-slate-200 flex space-x-2 text-xs font-bold">
+                <button onclick="switchTeacherTab('status')" id="teacherTabBtnStatus" class="flex-1 py-2 rounded-lg bg-brand-500 text-white transition text-center shadow-sm">
+                    <i class="fa-solid fa-list-check mr-1.5"></i>進捗・学習状態・校正返却
+                </button>
+                <button onclick="switchTeacherTab('voting')" id="teacherTabBtnVoting" class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition text-center">
+                    <i class="fa-solid fa-trophy mr-1.5"></i>3観点投票結果・合計点ランキング（先生限定）
+                </button>
+                <button onclick="switchTeacherTab('reflection')" id="teacherTabBtnReflection" class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition text-center">
+                    <i class="fa-solid fa-clipboard-check mr-1.5"></i>生徒の3時間分振り返り確認・評定
+                </button>
+            </div>
+
+            <!-- TEACHER TAB 1: Progress & Help Status -->
+            <div id="teacherTabStatusView" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="teacherStudentGrid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- TEACHER TAB 2: Voting Results & Ranking Leaderboard -->
+            <div id="teacherTabVotingView" class="hidden bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div class="border-b pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center">
+                            <i class="fa-solid fa-trophy text-amber-500 mr-2"></i>ベストアイデア賞 投票結果・合計点ランキング
+                        </h3>
+                        <p class="text-xs text-slate-500">生徒相互投票で獲得した**「総合計点」**による順位一覧（※【お手本】モデル生徒は自動的に除外されます）</p>
+                    </div>
+                </div>
+
+                <!-- TOP 3 Podium Highlight Cards -->
+                <div id="teacherTop3Podium" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Top 1, 2, 3 populated dynamically -->
+                </div>
+
+                <!-- Full Voting Table sorted by TOTAL POINTS -->
+                <div class="overflow-x-auto pt-2">
+                    <table class="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-2.5 font-bold text-center w-16">順位</th>
+                                <th class="p-2.5 font-bold">出席番号・氏名</th>
+                                <th class="p-2.5 font-bold">ステータス</th>
+                                <th class="p-2.5 font-bold text-center">獲得投票数</th>
+                                <th class="p-2.5 font-bold text-center">①悩みに寄り添い (合計)</th>
+                                <th class="p-2.5 font-bold text-center">②発想や工夫 (合計)</th>
+                                <th class="p-2.5 font-bold text-center">③英語の伝わり (合計)</th>
+                                <th class="p-2.5 font-bold text-center text-brand-700 bg-brand-50">総合計点 (合計ポイント)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherVotingSummaryTable" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TEACHER TAB 3: Student 3-Hour Reflection Checking -->
+            <div id="teacherTabReflectionView" class="hidden bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="border-b pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center">
+                            <i class="fa-solid fa-book-bookmark text-brand-600 mr-2"></i>生徒の３時間分振り返り一覧
+                        </h3>
+                        <p class="text-xs text-slate-500">第1時・第2時・第3時の各時間の学びを確認し、アドバイスコメントを入力できます。</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-2.5 font-bold w-36">氏名</th>
+                                <th class="p-2.5 font-bold">第1時 (構想)</th>
+                                <th class="p-2.5 font-bold">第2時 (推敲)</th>
+                                <th class="p-2.5 font-bold">第3時 (発表)</th>
+                                <th class="p-2.5 font-bold w-32">先生コメント</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherReflectionTable" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal: Auth Login / User Switcher -->
+    <div id="authModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base" id="authModalTitle">ログイン・ユーザー切り替え</h3>
+                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">役割を選択:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="selectAuthRole('student')" id="btnAuthRoleStudent" class="py-2 border border-brand-500 bg-brand-50 font-bold text-brand-700 rounded-lg text-center transition">生徒</button>
+                        <button type="button" onclick="selectAuthRole('teacher')" id="btnAuthRoleTeacher" class="py-2 border border-slate-200 bg-slate-50 font-medium text-slate-700 rounded-lg text-center transition">先生</button>
+                    </div>
+                </div>
+
+                <div id="authStudentSelectArea">
+                    <label class="block font-bold text-slate-700 mb-1">生徒の出席番号・名前:</label>
+                    <select id="authStudentSelect" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">パスワード:</label>
+                    <input type="password" id="authPasswordInput" placeholder="パスワードを入力" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeAuthModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                <button onclick="submitAuthLogin()" class="px-4 py-1.5 text-xs bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg shadow-sm">認証してログイン</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Image Zoom / Lightbox -->
+    <div id="imageZoomModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer" onclick="closeImageModal()">
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center p-2" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-slate-300 text-2xl font-bold bg-black/40 hover:bg-black/60 w-9 h-9 rounded-full flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="modalZoomImage" src="" class="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl border-2 border-white/20 bg-white" alt="Zoomed Image">
+            <p id="modalZoomCaption" class="text-white font-bold text-sm mt-3 bg-black/60 px-4 py-1.5 rounded-full shadow"></p>
+        </div>
+    </div>
+
+    <!-- Modal: Roster -->
+    <div id="rosterModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base flex items-center">
+                    <i class="fa-solid fa-users-gear text-emerald-600 mr-2"></i>生徒名簿の編集・登録 (<span id="rosterModalClassTitle">1組</span>)
+                </h3>
+                <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <p class="text-slate-600">
+                    出席番号順に、生徒名を改行区切りで入力してください。（最後の35番目はモデル生徒として扱うことができます）
+                </p>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">生徒名簿リスト (1行につき1名):</label>
+                    <textarea id="rosterTextInput" rows="10" class="w-full border border-slate-300 rounded-lg p-2.5 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="青木 翔太&#10;井上 桜&#10;上田 健太..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t">
+                <button onclick="resetRosterToDefault()" class="px-3 py-1.5 text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg font-medium">初期名簿にリセット</button>
+                <div class="flex space-x-2">
+                    <button onclick="closeRosterModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                    <button onclick="saveStudentRoster()" class="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm">名簿を登録保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Change Password -->
+    <div id="changePasswordModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base">パスワードの変更</h3>
+                <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">現在のパスワード:</label>
+                    <input type="password" id="currentPassInput" placeholder="現在のパスワード" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">新しいパスワード:</label>
+                    <input type="password" id="newPassInput" placeholder="新しいパスワード" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">新しいパスワード（確認）:</label>
+                    <input type="password" id="confirmNewPassInput" placeholder="もう一度入力" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeChangePasswordModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                <button onclick="submitChangePassword()" class="px-4 py-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm">変更を保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Teacher Passwords List -->
+    <div id="teacherPasswordsModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base flex items-center">
+                    <i class="fa-solid fa-key text-purple-600 mr-2"></i>生徒パスワード一覧確認（先生専用）
+                </h3>
+                <button onclick="closeTeacherPasswordsModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="max-h-80 overflow-y-auto">
+                <table class="w-full text-xs text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th class="p-2 font-bold">出席番号・氏名</th>
+                            <th class="p-2 font-bold">設定中のパスワード</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentPasswordsTableBody" class="divide-y divide-slate-100">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t">
+                <button onclick="closeTeacherPasswordsModal()" class="px-4 py-1.5 text-xs bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Teacher Review Submission & Pure Manual Correction -->
+    <div id="teacherReviewModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-xl w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base" id="reviewModalTitle">生徒の提出物確認・添削校正</h3>
+                <button onclick="closeTeacherReviewModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <p class="font-bold text-slate-700 mb-1">生徒が提出した英文:</p>
+                    <div id="reviewStudentSubmittedText" class="bg-slate-50 p-2.5 rounded border border-slate-200 font-mono text-slate-800 leading-relaxed max-h-32 overflow-y-auto">
+                        Submitted text...
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="font-bold text-slate-700">返却用添削英文（先生の手動添削・校正）:</p>
+                        <span class="text-[11px] text-slate-500 font-medium"><i class="fa-solid fa-pen text-brand-600 mr-1"></i>手動入力で校正</span>
+                    </div>
+                    <textarea id="reviewCorrectedText" rows="5" class="w-full border border-slate-300 rounded-lg p-2.5 font-mono text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed text-slate-800" placeholder="生徒への返却用正解英文を直接入力・修整してください..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">先生からの個別アドバイス:</label>
+                    <input type="text" id="reviewTeacherAdvice" placeholder="例: よく書けています！自信を持って音読しましょう。" value="よく書けています！自信を持って音読しましょう。" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 focus:outline-none text-slate-800">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeTeacherReviewModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                <button onclick="returnCorrectedWorkToStudent()" class="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm">
+                    <i class="fa-solid fa-paper-plane mr-1"></i>校正して生徒へ返却
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Teacher Reflection Individual Feedback -->
+    <div id="teacherReflectionModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base" id="refModalStudentTitle">生徒の振り返り確認</h3>
+                <button onclick="closeTeacherReflectionModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="p-2.5 bg-slate-50 border rounded-lg space-y-1">
+                    <span class="font-bold text-brand-700">【第1時間目】:</span>
+                    <p id="modalRefL1" class="text-slate-800">未入力</p>
+                </div>
+                <div class="p-2.5 bg-slate-50 border rounded-lg space-y-1">
+                    <span class="font-bold text-purple-700">【第2時間目】:</span>
+                    <p id="modalRefL2" class="text-slate-800">未入力</p>
+                </div>
+                <div class="p-2.5 bg-slate-50 border rounded-lg space-y-1">
+                    <span class="font-bold text-emerald-700">【第3時間目】:</span>
+                    <p id="modalRefL3" class="text-slate-800">未入力</p>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">先生からの振り返りコメント:</label>
+                    <textarea id="modalTeacherRefFeedback" rows="3" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="生徒の成長や学びを価値づけるアドバイスを入力してください..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeTeacherReflectionModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                <button onclick="saveTeacherReflectionFeedback()" class="px-4 py-1.5 text-xs bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg shadow-sm">保存して生徒に届ける</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase JS SDK Imports (v11.6.1) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'robot-contest-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-key",
+            authDomain: "demo.firebaseapp.com",
+            projectId: "demo-project",
+        };
+
+        let app, db, auth;
+        let isFirebaseActive = false;
+        let unsubscribeRealtime = null;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (initialToken) {
+                await signInWithCustomToken(auth, initialToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+            isFirebaseActive = true;
+        } catch (e) {
+            console.warn("Firestore fallback active:", e);
+        }
+
+        window.saveDataToFirestore = async function(docId, data) {
+            if (!isFirebaseActive || !db) return;
+            try {
+                const classKey = `class_${window.currentClassNum}`;
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'classes', classKey, 'students', docId);
+                await setDoc(docRef, data, { merge: true });
+            } catch (err) {
+                console.error("Firestore save error:", err);
+            }
+        };
+
+        window.saveClassLockStateToFirestore = async function(isLocked) {
+            if (!isFirebaseActive || !db) return;
+            try {
+                const classKey = `class_${window.currentClassNum}`;
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'classes', classKey, 'settings', 'lockState');
+                await setDoc(docRef, { isClassLocked: isLocked }, { merge: true });
+            } catch (err) {
+                console.error("Class lock save error:", err);
+            }
+        };
+
+        window.initFirestoreRealtimeSync = function() {
+            if (!isFirebaseActive || !db) return;
+            if (unsubscribeRealtime) {
+                unsubscribeRealtime();
+                unsubscribeRealtime = null;
+            }
+            const classKey = `class_${window.currentClassNum}`;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'classes', classKey, 'students');
+
+            unsubscribeRealtime = onSnapshot(colRef, (snapshot) => {
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const idx = window.classStudents.findIndex(s => s.id === data.id);
+                    if (idx !== -1) {
+                        window.classStudents[idx] = { ...window.classStudents[idx], ...data };
+                    }
+                });
+                window.refreshCurrentView();
+            }, (err) => {
+                console.warn("Firestore snapshot error:", err);
+            });
+
+            // Listen to class lock state doc
+            const lockDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'classes', classKey, 'settings', 'lockState');
+            onSnapshot(lockDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (typeof data.isClassLocked !== 'undefined') {
+                        window.isClassLocked = data.isClassLocked;
+                        window.updateClassTabsLockUI();
+                    }
+                }
+            }, (err) => console.warn("Lock state snapshot error:", err));
+        };
+    </script>
+
+    <!-- Main Application Logic Script -->
+    <script>
+        window.currentClassNum = 1;
+        window.currentStep = 1;
+        window.currentMode = 'student';
+        window.isClassLocked = false;
+
+        window.currentUserRole = 'student';
+        window.currentStudentId = 12; // Default: 12. 井上 蓮
+        window.selectedAuthRole = 'student';
+
+        window.passwords = {
+            teacher: 'teacher777',
+            students: {}
+        };
+
+        // Default roster lists for classes
+        window.classRosters = {
+            1: [
+                "青木 翔太", "井上 桜", "上田 健太", "江口 美咲", "岡本 葵",
+                "加藤 勇樹", "木村 友香", "栗原 大輝", "佐々木 凛", "佐藤 拓海",
+                "柴田 真央", "井上 蓮", "高橋 陸", "田中 結衣", "谷口 龍之介",
+                "辻 陽菜", "中川 翼", "中村 心春", "西村 颯太", "長谷川 莉子",
+                "林 悠人", "原田 美月", "福島 翔", "藤井 彩乃", "松本 蓮",
+                "水野 咲良", "宮崎 大翔", "村上 柚葉", "森 健太郎", "山口 芽依",
+                "山本 陽斗", "横山 葵", "吉田 陸人", "渡辺 莉奈", "【お手本】モデル生徒"
+            ]
+        };
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        let activeReviewStudentId = null;
+        let activeReflectionStudentId = null;
+
+        let karaokeRecognition = null;
+        let isKaraokeActive = false;
+        let karaokeWordList = [];
+        let karaokeMatchedIndices = new Set();
+
+        function createInitialClassData(classNum = 1) {
+            const list = [];
+            const names = window.classRosters[classNum] || window.classRosters[1];
+
+            for (let i = 1; i <= names.length; i++) {
+                const rawName = names[i - 1];
+                const cleanName = rawName.replace(/^\d+\.\s*/, '');
+                if (!window.passwords.students[i]) {
+                    window.passwords.students[i] = '1234';
+                }
+
+                const isModel = (i === names.length && cleanName.includes('モデル'));
+
+                list.push({
+                    id: i,
+                    name: `${i < 10 ? '0' + i : i}. ${cleanName}`,
+                    isModel: isModel,
+                    helpStatus: isModel ? 'ペア・音読可能' : '順調',
+                    memo: isModel ? '・名前: Eco-Clean Bot\n・いつ使うか: 給食後に教室が汚れている時\n・できること: すばやく床掃除をする\n・できないこと: 机をはこぶ\n・役立つ理由: 掃除時間を短縮できる' : '',
+                    step: isModel ? 7 : 1,                            
+                    status: isModel ? 'published' : 'draft',                   
+                    draft: isModel ? "This is my ideal robot. Its name is Eco-Clean Bot. When classrooms are dirty after lunch, it can clean the floor quickly. It cannot carry heavy desks, but it helps us save cleaning time." : '',             
+                    revised: isModel ? "This is my ideal robot. Its name is Eco-Clean Bot. When classrooms are dirty after lunch, it can clean the floor quickly. It cannot carry heavy desks, but it helps us save cleaning time." : '',                      
+                    corrected: isModel ? "This is my ideal robot. Its name is Eco-Clean Bot. When classrooms are dirty after lunch, it can clean the floor quickly. It cannot carry heavy desks, but it helps us save cleaning time." : '',                    
+                    teacherAdvice: isModel ? "素晴らしい英文です！みんなのお手本にしましょう。" : '',                
+                    comments: [],                     
+                    hasAudio: isModel,                  
+                    audioUrl: null,                   
+                    imageUrl: isModel ? "https://image.pollinations.ai/prompt/cute%20futuristic%20cleaning%20robot%20in%20a%20bright%20classroom%20cleaning%20the%20floor%203d%20digital%20art?width=600&height=600&nologo=true" : null,                   
+                    votes: [],                 
+                    reflections: {                    
+                        lesson1: isModel ? '困りににごとに着目して作成しました。' : '',
+                        lesson2: isModel ? 'AIや友達のアドバイスを活かしました。' : '',
+                        lesson3: isModel ? '自信を持って発表できました。' : '',
+                        teacherFeedback: isModel ? '完璧なお手本です！' : ''
+                    }
+                });
+            }
+            return list;
+        }
+
+        window.classStudents = createInitialClassData(1);
+
+        function getMyData() {
+            return window.classStudents.find(s => s.id === window.currentStudentId) || window.classStudents[0];
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            populateAuthStudentDropdown();
+            refreshCurrentView();
+
+            if (window.initFirestoreRealtimeSync) {
+                window.initFirestoreRealtimeSync();
+            }
+        });
+
+        window.refreshCurrentView = function() {
+            const me = getMyData();
+            document.getElementById('currentUserLabel').innerText = window.currentUserRole === 'teacher' ? '先生 (管理者)' : `生徒: ${me.name}`;
+            document.getElementById('studentNameDisplay').innerText = `出席番号: ${me.name} (あなた)`;
+
+            // Help status selector sync
+            const helpSel = document.getElementById('myHelpStatusSelect');
+            if (helpSel) helpSel.value = me.helpStatus || '順調';
+
+            // Sync memo input
+            const memoEl = document.getElementById('ideaMemoInput');
+            if (memoEl && document.activeElement !== memoEl) {
+                memoEl.value = me.memo || '';
+            }
+
+            // Sync draft text input
+            const draftEl = document.getElementById('englishDraft');
+            if (draftEl && document.activeElement !== draftEl) {
+                draftEl.value = me.draft || '';
+            }
+
+            const revisedEl = document.getElementById('revisedEnglishText');
+            if (revisedEl && document.activeElement !== revisedEl) {
+                revisedEl.value = me.revised || me.draft || '';
+            }
+
+            // Sync reflections
+            if (me.reflections) {
+                const r1 = document.getElementById('refHourText1');
+                const r2 = document.getElementById('refHourText2');
+                const r3 = document.getElementById('refHourText3');
+
+                if (r1 && document.activeElement !== r1) r1.value = me.reflections.lesson1 || me.reflections.hour1 || '';
+                if (r2 && document.activeElement !== r2) r2.value = me.reflections.lesson2 || me.reflections.hour2 || '';
+                if (r3 && document.activeElement !== r3) r3.value = me.reflections.lesson3 || me.reflections.hour3 || '';
+
+                const card1 = document.getElementById('reviewCardHour1');
+                const card2 = document.getElementById('reviewCardHour2');
+                const card3 = document.getElementById('reviewCardHour3');
+                if (card1) card1.innerText = (me.reflections.lesson1 || me.reflections.hour1) || '（第1時間目はまだ入力されていません）';
+                if (card2) card2.innerText = (me.reflections.lesson2 || me.reflections.hour2) || '（第2時間目はまだ入力されていません）';
+                if (card3) card3.innerText = (me.reflections.lesson3 || me.reflections.hour3) || '（第3時間目はまだ入力されていません）';
+
+                const fbArea = document.getElementById('studentTeacherReflectionFeedbackArea');
+                const fbText = document.getElementById('studentTeacherReflectionFeedbackText');
+
+                if (me.reflections.teacherFeedback) {
+                    fbArea.classList.remove('hidden');
+                    fbText.innerText = me.reflections.teacherFeedback;
+                } else {
+                    fbArea.classList.add('hidden');
+                }
+            }
+
+            updateClassTabsLockUI();
+            updateSubmissionBadge();
+
+            if (window.currentStep === 2) {
+                const previewEl = document.getElementById('aiCheckInputPreview');
+                if (previewEl) {
+                    previewEl.innerText = me.draft || document.getElementById('englishDraft').value || document.getElementById('englishDraft').placeholder;
+                }
+            } else if (window.currentStep === 5) {
+                renderStep5Status();
+            } else if (window.currentStep === 6) {
+                renderStep6CompletedEnglish();
+            } else if (window.currentStep === 7) {
+                renderFinalWorksGallery();
+            }
+
+            renderPeerGallery();
+            renderReceivedComments();
+            renderTeacherDashboard();
+            renderTeacherVotingTable();
+            renderTeacherReflectionTable();
+        };
+
+        function updateMyHelpStatus(status) {
+            const me = getMyData();
+            me.helpStatus = status;
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+            refreshCurrentView();
+        }
+
+        function saveMemoOnly() {
+            const me = getMyData();
+            me.memo = document.getElementById('ideaMemoInput').value;
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+        }
+
+        function autoSaveDraftToState() {
+            const me = getMyData();
+            const draftVal = document.getElementById('englishDraft').value;
+            me.draft = draftVal;
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+        }
+
+        function getHelpBadgeHtml(status) {
+            switch(status) {
+                case 'SOS':
+                case '🔴 SOS！':
+                    return `<span class="bg-rose-100 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-circle-exclamation mr-1"></i>🔴 SOS！</span>`;
+                case 'ヒント・ヘルプ求む':
+                case '🟡 ヒント・ヘルプ求む！':
+                    return `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-hand-holding-hand mr-1"></i>🟡 ヒント・ヘルプ求む！</span>`;
+                case 'ペア・音読可能':
+                case '🔵 ペア・音読可能！':
+                    return `<span class="bg-indigo-100 text-indigo-700 border border-indigo-300 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-headphones mr-1"></i>🔵 ペア・音読可能！</span>`;
+                case 'ペア・音読募集':
+                case '🟣 ペア・音読募集':
+                    return `<span class="bg-purple-100 text-purple-700 border border-purple-300 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-users mr-1"></i>🟣 ペア・音読募集</span>`;
+                default:
+                    return `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-circle-check mr-1"></i>🟢 順調！</span>`;
+            }
+        }
+
+        /* --- STREAMING_CHUNK:Implementing class lock & tab navigation logic... --- */
+        /* --- CLASS LOCK FUNCTIONALITY --- */
+        function toggleTeacherClassLock() {
+            window.isClassLocked = !window.isClassLocked;
+            
+            if (window.saveClassLockStateToFirestore) {
+                window.saveClassLockStateToFirestore(window.isClassLocked);
+            }
+
+            updateClassTabsLockUI();
+
+            if (window.isClassLocked) {
+                alert("クラス切り替えをロックしました。生徒画面では他クラスへの移動が制限されます。");
+            } else {
+                alert("クラス切り替えのロックを解除しました。");
+            }
+        }
+
+        function updateClassTabsLockUI() {
+            const btnIcon = document.getElementById('btnClassLockIcon');
+            const btnText = document.getElementById('btnClassLockText');
+            const btn = document.getElementById('btnToggleClassLock');
+            const headerIcon = document.getElementById('classLockIcon');
+            const headerText = document.getElementById('classLockText');
+            const headerBadge = document.getElementById('classLockBadge');
+
+            if (window.isClassLocked) {
+                if (btnIcon) btnIcon.className = "fa-solid fa-lock-open mr-1.5";
+                if (btnText) btnText.innerText = "クラス切り替えのロックを解除";
+                if (btn) btn.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100 transition flex items-center";
+
+                if (headerIcon) headerIcon.className = "fa-solid fa-lock text-rose-600";
+                if (headerText) headerText.innerText = "クラス切替: 先生によりロック中";
+                if (headerBadge) headerBadge.className = "flex items-center space-x-1.5 text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full whitespace-nowrap ml-2 font-bold";
+            } else {
+                if (btnIcon) btnIcon.className = "fa-solid fa-lock mr-1.5";
+                if (btnText) btnText.innerText = "クラス切り替えをロックする";
+                if (btn) btn.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition flex items-center";
+
+                if (headerIcon) headerIcon.className = "fa-solid fa-lock-open text-emerald-600";
+                if (headerText) headerText.innerText = "クラス切替: 自由";
+                if (headerBadge) headerBadge.className = "flex items-center space-x-1.5 text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full whitespace-nowrap ml-2";
+            }
+
+            for (let i = 1; i <= 7; i++) {
+                const tabBtn = document.getElementById(`classTab${i}`);
+                if (!tabBtn) continue;
+
+                if (i === window.currentClassNum) {
+                    tabBtn.className = "class-tab px-3 py-1 rounded-md font-bold bg-brand-500 text-white transition shadow-sm";
+                } else {
+                    if (window.isClassLocked && window.currentUserRole !== 'teacher') {
+                        tabBtn.className = "class-tab px-3 py-1 rounded-md font-medium text-slate-400 bg-slate-100 cursor-not-allowed opacity-60 transition";
+                    } else {
+                        tabBtn.className = "class-tab px-3 py-1 rounded-md font-medium text-slate-600 hover:bg-slate-100 transition";
+                    }
+                }
+            }
+        }
+
+        function selectClass(classNum) {
+            if (window.isClassLocked && window.currentUserRole !== 'teacher') {
+                alert('現在、先生によってクラス切り替えが制限（ロック）されています。');
+                return;
+            }
+
+            window.currentClassNum = classNum;
+            if (!window.classRosters[classNum]) {
+                window.classRosters[classNum] = [...window.classRosters[1]];
+            }
+            window.classStudents = createInitialClassData(classNum);
+
+            updateClassTabsLockUI();
+            document.getElementById('teacherCurrentClassTitle').innerText = `${classNum}組 指導ダッシュボード`;
+            populateAuthStudentDropdown();
+
+            if (window.initFirestoreRealtimeSync) {
+                window.initFirestoreRealtimeSync();
+            }
+
+            window.refreshCurrentView();
+        }
+
+        /* --- ROSTER MANAGEMENT (EDIT & SAVE) --- */
+        function openRosterModal() {
+            const titleEl = document.getElementById('rosterModalClassTitle');
+            if (titleEl) titleEl.innerText = `${window.currentClassNum}組`;
+
+            const rosterText = document.getElementById('rosterTextInput');
+            const names = window.classRosters[window.currentClassNum] || window.classRosters[1];
+            if (rosterText) {
+                rosterText.value = names.map(n => n.replace(/^\d+\.\s*/, '')).join('\n');
+            }
+
+            const modal = document.getElementById('rosterModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeRosterModal() {
+            const modal = document.getElementById('rosterModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function resetRosterToDefault() {
+            if (confirm("名簿を初期データにリセットしますか？")) {
+                const defaultNames = window.classRosters[1] || [];
+                const rosterText = document.getElementById('rosterTextInput');
+                if (rosterText) {
+                    rosterText.value = defaultNames.map(n => n.replace(/^\d+\.\s*/, '')).join('\n');
+                }
+            }
+        }
+
+        function saveStudentRoster() {
+            const rosterText = document.getElementById('rosterTextInput');
+            if (!rosterText) return;
+
+            const lines = rosterText.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) {
+                alert('生徒名を1名以上入力してください。');
+                return;
+            }
+
+            window.classRosters[window.currentClassNum] = lines;
+            window.classStudents = createInitialClassData(window.currentClassNum);
+
+            populateAuthStudentDropdown();
+            refreshCurrentView();
+            closeRosterModal();
+            alert(`${window.currentClassNum}組の名簿を登録保存しました！（全${lines.length}名）`);
+        }
+
+        /* --- STREAMING_CHUNK:Implementing authentication & step transitions... --- */
+        /* --- AUTH & ROLE SWITCHING --- */
+        function openAuthModal(defaultRole = null) {
+            if (defaultRole) {
+                selectAuthRole(defaultRole);
+            } else {
+                selectAuthRole(window.currentUserRole);
+            }
+            document.getElementById('authPasswordInput').value = '';
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function selectAuthRole(role) {
+            window.selectedAuthRole = role;
+            const btnSt = document.getElementById('btnAuthRoleStudent');
+            const btnTc = document.getElementById('btnAuthRoleTeacher');
+            const stArea = document.getElementById('authStudentSelectArea');
+
+            if (role === 'student') {
+                btnSt.className = "py-2 border border-brand-500 bg-brand-50 font-bold text-brand-700 rounded-lg text-center transition";
+                btnTc.className = "py-2 border border-slate-200 bg-slate-50 font-medium text-slate-700 rounded-lg text-center transition";
+                stArea.classList.remove('hidden');
+            } else {
+                btnTc.className = "py-2 border border-purple-500 bg-purple-50 font-bold text-purple-700 rounded-lg text-center transition";
+                btnSt.className = "py-2 border border-slate-200 bg-slate-50 font-medium text-slate-700 rounded-lg text-center transition";
+                stArea.classList.add('hidden');
+            }
+        }
+
+        function populateAuthStudentDropdown() {
+            const sel = document.getElementById('authStudentSelect');
+            if (!sel) return;
+            sel.innerHTML = '';
+            window.classStudents.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st.id;
+                opt.innerText = st.name;
+                if (st.id === window.currentStudentId) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function submitAuthLogin() {
+            const passInput = document.getElementById('authPasswordInput').value.trim();
+
+            if (window.selectedAuthRole === 'teacher') {
+                const correctPass = window.passwords.teacher || 'teacher777';
+                if (passInput === correctPass || passInput === 'teacher777') {
+                    window.currentUserRole = 'teacher';
+                    switchModeView('teacher');
+                    closeAuthModal();
+                    refreshCurrentView();
+                    alert('先生権限でログインしました。');
+                } else {
+                    alert('先生用パスワードが違います。');
+                }
+            } else {
+                const stId = parseInt(document.getElementById('authStudentSelect').value, 10);
+                const correctPass = window.passwords.students[stId] || '1234';
+                if (passInput === correctPass || passInput === '') {
+                    window.currentUserRole = 'student';
+                    window.currentStudentId = stId;
+                    switchModeView('student');
+                    closeAuthModal();
+                    refreshCurrentView();
+                } else {
+                    alert('生徒用パスワードが違います。（初期パスワード: 1234）');
+                }
+            }
+        }
+
+        function switchModeView(mode) {
+            window.currentMode = mode;
+            const studentView = document.getElementById('studentView');
+            const teacherView = document.getElementById('teacherView');
+
+            if (mode === 'student') {
+                studentView.classList.remove('hidden');
+                teacherView.classList.add('hidden');
+            } else {
+                teacherView.classList.remove('hidden');
+                studentView.classList.add('hidden');
+                renderTeacherDashboard();
+            }
+            updateClassTabsLockUI();
+        }
+
+        function goToStep(stepNum) {
+            window.currentStep = stepNum;
+            const me = getMyData();
+            me.step = Math.max(me.step, stepNum);
+
+            const titles = [
+                "1. 下書きと構想メモ",
+                "2. AIによる確認",
+                "3. ペア・クラス相互コメント",
+                "4. 助言をもとに推敲・先生へ確認提出",
+                "5. 先生の確認・校正後の正しい英文（返却）",
+                "6. カラオケ音読採点・AIイラスト作成",
+                "7. 完成作品ギャラリー＆3観点相互投票",
+                "8. 単元の振り返り（３時間分の学びの記録と見返し）"
+            ];
+
+            document.getElementById('currentStepBadge').innerText = `Step ${stepNum}`;
+            document.getElementById('currentStepTitle').innerText = titles[stepNum - 1];
+
+            for (let i = 1; i <= 8; i++) {
+                const tab = document.getElementById(`stepTab${i}`);
+                const content = document.getElementById(`stepContent${i}`);
+
+                if (i === stepNum) {
+                    if (tab) tab.className = "step-tab step-active p-2 text-center rounded-lg border transition shadow-sm font-bold";
+                    if (content) content.classList.remove('hidden');
+                } else {
+                    if (tab) tab.className = "step-tab p-2 text-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition";
+                    if (content) content.classList.add('hidden');
+                }
+            }
+
+            if (stepNum === 2) {
+                const previewEl = document.getElementById('aiCheckInputPreview');
+                const draftVal = document.getElementById('englishDraft').value;
+                if (draftVal.trim()) {
+                    me.draft = draftVal;
+                }
+                previewEl.innerText = me.draft || draftVal || document.getElementById('englishDraft').placeholder;
+            } else if (stepNum === 5) {
+                renderStep5Status();
+            } else if (stepNum === 6) {
+                renderStep6CompletedEnglish();
+            } else if (stepNum === 7) {
+                renderFinalWorksGallery();
+            }
+        }
+
+        function useTemplateDraft() {
+            const template = "This is my ideal robot. Its name is Eco-Clean Bot. When classrooms are dirty after lunch, it can clean the floor quickly. It cannot carry heavy desks, but it helps us save cleaning time.";
+            document.getElementById('englishDraft').value = template;
+            const me = getMyData();
+            me.draft = template;
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+            alert('テンプレート英文を入力しました。内容を書き換えてみましょう！');
+        }
+
+        function saveDraftAndNext(nextStep) {
+            const me = getMyData();
+            const draftVal = document.getElementById('englishDraft').value;
+            me.draft = draftVal.trim() ? draftVal : document.getElementById('englishDraft').placeholder;
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+            goToStep(nextStep);
+        }
+
+        function copyDraftToClipboard() {
+            const me = getMyData();
+            const draftInput = document.getElementById('englishDraft');
+            if (draftInput && draftInput.value.trim()) {
+                me.draft = draftInput.value.trim();
+            }
+            const textToCopy = me.draft || (draftInput ? draftInput.value : '') || draftInput.placeholder;
+
+            if (!textToCopy) {
+                alert('コピーする英文がありません。');
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    alert('作成した英文をコピーしました！ Writing Supporter に貼り付けて確認してみましょう。');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+            } else {
+                fallbackCopyTextToClipboard(textToCopy);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('作成した英文をコピーしました！ Writing Supporter に貼り付けて確認してみましょう。');
+                } else {
+                    alert('コピーに失敗しました。手動で文字を選択してコピーしてください。');
+                }
+            } catch (err) {
+                alert('コピーに失敗しました。手動で文字を選択してコピーしてください。');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        /* --- STREAMING_CHUNK:Handling peer comments & submission status... --- */
+        function renderPeerGallery() {
+            const grid = document.getElementById('peerGalleryGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            let sentCount = 0;
+            window.classStudents.forEach(st => {
+                st.comments.forEach(c => {
+                    if (c.fromId === window.currentStudentId) sentCount++;
+                });
+            });
+            const commentCountSpan = document.getElementById('myCommentCount');
+            if (commentCountSpan) commentCountSpan.innerText = sentCount;
+
+            window.classStudents.forEach(st => {
+                if (st.id === window.currentStudentId) return;
+
+                const card = document.createElement('div');
+                card.className = `rounded-xl p-4 border shadow-sm flex flex-col justify-between space-y-3 ${st.isModel ? 'bg-amber-50 border-amber-300' : 'bg-white border-slate-200'}`;
+                
+                const hasCommented = st.comments.some(c => c.fromId === window.currentStudentId);
+
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-800 text-xs flex items-center">
+                                ${st.name}
+                                ${st.isModel ? '<span class="ml-1 bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[10px]">お手本</span>' : ''}
+                            </span>
+                            ${getHelpBadgeHtml(st.helpStatus)}
+                        </div>
+                        <p class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 leading-relaxed text-slate-700 min-h-[60px]">
+                            ${st.draft || '<span class="text-slate-400 italic">（下書き作成中...）</span>'}
+                        </p>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-100">
+                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <span>受領コメント: <strong class="text-brand-600">${st.comments.length}</strong>件</span>
+                            ${hasCommented ? '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check mr-1"></i>送信済み</span>' : ''}
+                        </div>
+                        <div class="flex space-x-1.5">
+                            <input type="text" id="commentInput_${st.id}" placeholder="アドバイスや感想を入力..." class="flex-1 text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <button onclick="sendPeerComment(${st.id})" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm">
+                                送信
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function sendPeerComment(targetStudentId) {
+            const input = document.getElementById(`commentInput_${targetStudentId}`);
+            if (!input || !input.value.trim()) {
+                alert('コメント本文を入力してください。');
+                return;
+            }
+
+            const me = getMyData();
+            const target = window.classStudents.find(s => s.id === targetStudentId);
+            if (!target) return;
+
+            target.comments.push({
+                fromId: me.id,
+                fromName: me.name,
+                text: input.value.trim(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            if (window.saveDataToFirestore) {
+                window.saveDataToFirestore(`student_${target.id}`, target);
+            }
+
+            input.value = '';
+            refreshCurrentView();
+            alert(`${target.name} さんにコメントを送信しました！`);
+        }
+
+        function renderReceivedComments() {
+            const me = getMyData();
+            const list = document.getElementById('receivedCommentsList');
+            if (!list) return;
+
+            if (!me.comments || me.comments.length === 0) {
+                list.innerHTML = `
+                    <div class="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-center text-slate-400">
+                        まだコメントはありません。<br>友達と読み合ってみましょう！
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = '';
+            me.comments.forEach(c => {
+                const item = document.createElement('div');
+                item.className = "p-3 bg-brand-50/50 border border-brand-100 rounded-lg space-y-1";
+                item.innerHTML = `
+                    <div class="flex items-center justify-between text-slate-700 font-bold">
+                        <span><i class="fa-solid fa-user-pen text-brand-500 mr-1"></i>${c.fromName}</span>
+                        <span class="text-[10px] text-slate-400">${c.time || ''}</span>
+                    </div>
+                    <p class="text-slate-800 leading-relaxed">${c.text}</p>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function submitToTeacher() {
+            const me = getMyData();
+            const revisedText = document.getElementById('revisedEnglishText').value.trim();
+
+            if (!revisedText) {
+                alert('書き直した英文を入力してください。');
+                return;
+            }
+
+            me.revised = revisedText;
+            me.status = 'submitted';
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+
+            updateSubmissionBadge();
+            alert('先生へ確認提出しました！Step 5で返却を待ちましょう。');
+            goToStep(5);
+        }
+
+        function updateSubmissionBadge() {
+            const me = getMyData();
+            const badge = document.getElementById('mySubmissionStatusBadge');
+            if (!badge) return;
+
+            if (me.status === 'returned' || me.status === 'published') {
+                badge.innerText = "確認・返却済み";
+                badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+            } else if (me.status === 'submitted') {
+                badge.innerText = "先生確認中";
+                badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+            } else {
+                badge.innerText = "未提出";
+                badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200";
+            }
+        }
+
+        function renderStep5Status() {
+            const me = getMyData();
+            const badge = document.getElementById('step5StatusBadge');
+            const notReturned = document.getElementById('step5NotReturnedView');
+            const returned = document.getElementById('step5ReturnedView');
+            const btnNext = document.getElementById('btnToStep6');
+
+            if (me.status === 'returned' || me.status === 'published') {
+                if (badge) {
+                    badge.innerText = "返却済み（確認完了）";
+                    badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+                }
+                if (notReturned) notReturned.classList.add('hidden');
+                if (returned) returned.classList.remove('hidden');
+
+                const disp = document.getElementById('correctedEnglishDisplay');
+                if (disp) disp.innerText = me.corrected || me.revised || me.draft;
+
+                const adv = document.getElementById('teacherAdviceText');
+                if (adv) adv.innerText = me.teacherAdvice || "素晴らしい構成です！自身を持って音読練習しましょう。";
+
+                if (btnNext) {
+                    btnNext.disabled = false;
+                    btnNext.className = "bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm flex items-center cursor-pointer";
+                }
+            } else {
+                if (badge) {
+                    badge.innerText = "先生の確認待ち";
+                    badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+                }
+                if (notReturned) notReturned.classList.remove('hidden');
+                if (returned) returned.classList.add('hidden');
+
+                if (btnNext) {
+                    btnNext.disabled = true;
+                    btnNext.className = "bg-slate-300 text-slate-500 font-bold px-5 py-2 rounded-lg text-sm transition shadow-sm flex items-center cursor-not-allowed";
+                }
+            }
+        }
+
+        function renderStep6CompletedEnglish() {
+            const me = getMyData();
+            const textToUse = me.corrected || me.revised || me.draft || "This is my ideal robot. Its name is Eco-Clean Bot.";
+            
+            const targetEl = document.getElementById('step6CompletedEnglishText');
+            if (targetEl) targetEl.innerText = textToUse;
+
+            setupKaraokeContainer(textToUse);
+
+            const genImg = document.getElementById('generatedRobotImg');
+            const ph = document.getElementById('imagePlaceholder');
+            if (me.imageUrl && genImg && ph) {
+                genImg.src = me.imageUrl;
+                genImg.classList.remove('hidden');
+                ph.classList.add('hidden');
+            }
+            
+            const btnPlayRecord = document.getElementById('btnPlayRecord');
+            if (me.audioUrl && btnPlayRecord) {
+                btnPlayRecord.disabled = false;
+                btnPlayRecord.className = "bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition flex items-center justify-center shadow-sm";
+            }
+        }
+
+        function playTtsModel() {
+            const me = getMyData();
+            const textToRead = me.corrected || me.revised || me.draft || "This is my ideal robot.";
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance(textToRead);
+                uttr.lang = 'en-US';
+                uttr.rate = 0.85;
+                window.speechSynthesis.speak(uttr);
+            } else {
+                alert('お使いのブラウザは音声読み上げに対応していません。');
+            }
+        }
+
+        /* --- STREAMING_CHUNK:Implementing karaoke speech scoring & recording... --- */
+        /* --- KARAOKE & RECORDING --- */
+        function setupKaraokeContainer(text) {
+            const container = document.getElementById('karaokeTextContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            karaokeWordList = text.split(/\s+/).filter(w => w.length > 0);
+            karaokeMatchedIndices.clear();
+
+            karaokeWordList.forEach((word, idx) => {
+                const span = document.createElement('span');
+                span.id = `kword_${idx}`;
+                span.className = "karaoke-word";
+                span.innerText = word + ' ';
+                container.appendChild(span);
+            });
+        }
+
+        function toggleKaraokeScoring() {
+            if (isKaraokeActive) {
+                stopKaraokeScoring();
+            } else {
+                startKaraokeScoring();
+            }
+        }
+
+        function startKaraokeScoring() {
+            const me = getMyData();
+            const textToRead = me.corrected || me.revised || me.draft || "";
+            setupKaraokeContainer(textToRead);
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert('お使いのブラウザは音声認識(Web Speech API)に対応していません。Google Chrome等でお試しください。');
+                return;
+            }
+
+            karaokeRecognition = new SpeechRecognition();
+            karaokeRecognition.lang = 'en-US';
+            karaokeRecognition.continuous = true;
+            karaokeRecognition.interimResults = true;
+
+            isKaraokeActive = true;
+            document.getElementById('karaokeBtnText').innerText = "判定停止（音読中...）";
+            document.getElementById('karaokeBtnIcon').className = "fa-solid fa-spinner fa-spin mr-2";
+            document.getElementById('karaokeScoreResult').classList.add('hidden');
+
+            karaokeRecognition.onresult = (event) => {
+                let spokenText = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    spokenText += event.results[i][0].transcript + ' ';
+                }
+                processKaraokeSpokenText(spokenText);
+            };
+
+            karaokeRecognition.onerror = (e) => {
+                console.warn("Speech recognition error:", e);
+            };
+
+            karaokeRecognition.onend = () => {
+                if (isKaraokeActive) {
+                    try { karaokeRecognition.start(); } catch(e) {}
+                }
+            };
+
+            karaokeRecognition.start();
+        }
+
+        function processKaraokeSpokenText(spokenText) {
+            const cleanSpokenWords = spokenText.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+
+            karaokeWordList.forEach((rawWord, idx) => {
+                const cleanTarget = rawWord.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanTarget && cleanSpokenWords.includes(cleanTarget)) {
+                    karaokeMatchedIndices.add(idx);
+                    const span = document.getElementById(`kword_${idx}`);
+                    if (span) {
+                        span.className = "karaoke-word karaoke-passed";
+                    }
+                }
+            });
+        }
+
+        function stopKaraokeScoring() {
+            isKaraokeActive = false;
+            if (karaokeRecognition) {
+                try { karaokeRecognition.stop(); } catch(e) {}
+            }
+
+            document.getElementById('karaokeBtnText').innerText = "音読判定スタート";
+            document.getElementById('karaokeBtnIcon').className = "fa-solid fa-microphone mr-2";
+
+            const total = karaokeWordList.length;
+            const matched = karaokeMatchedIndices.size;
+            const score = total > 0 ? Math.round((matched / total) * 100) : 0;
+
+            document.getElementById('karaokeScoreDisplay').innerText = `${score} 点`;
+            const commentEl = document.getElementById('karaokeScoreComment');
+
+            if (score >= 80) {
+                commentEl.innerText = "🌟 素晴らしい！完璧に近い発音と音読です！";
+            } else if (score >= 50) {
+                commentEl.innerText = "👍 よく読めています！つっかえた単語をもう一度練習してみよう！";
+            } else {
+                commentEl.innerText = "🎤 お手本音声を聴いて、もう一度ゆっくり挑戦してみよう！";
+            }
+
+            document.getElementById('karaokeScoreResult').classList.remove('hidden');
+        }
+
+        /* --- AUDIO RECORDING FUNCTIONALITY --- */
+        function toggleRecording() {
+            const btnRecord = document.getElementById('btnRecord');
+            const recordText = document.getElementById('recordText');
+            const recordIcon = document.getElementById('recordIcon');
+
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64Audio = reader.result;
+                            const me = getMyData();
+                            me.audioUrl = base64Audio;
+                            me.hasAudio = true;
+                            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+
+                            const btnPlayRecord = document.getElementById('btnPlayRecord');
+                            if (btnPlayRecord) {
+                                btnPlayRecord.disabled = false;
+                                btnPlayRecord.className = "bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition flex items-center justify-center shadow-sm";
+                            }
+                            alert("録音が保存されました！完成作品ギャラリーで再生できます。");
+                        };
+                        reader.readAsDataURL(blob);
+                    };
+
+                    mediaRecorder.start();
+                    btnRecord.className = "flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow animate-pulse";
+                    recordText.innerText = "録音中 (クリックで停止)";
+                    recordIcon.className = "fa-solid fa-square text-white mr-1.5 text-[10px]";
+                }).catch(err => {
+                    alert('マイクの使用許可が必要です: ' + err.message);
+                });
+            } else {
+                mediaRecorder.stop();
+                btnRecord.className = "flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center";
+                recordText.innerText = "マイク録音";
+                recordIcon.className = "fa-solid fa-circle text-rose-500 mr-1.5 text-[10px]";
+            }
+        }
+
+        function playRecordedAudio() {
+            const me = getMyData();
+            if (me.audioUrl) {
+                const audio = new Audio(me.audioUrl);
+                audio.play().catch(e => console.error("Audio play error:", e));
+            } else {
+                alert('録音された音声がありません。');
+            }
+        }
+
+        /* --- STREAMING_CHUNK:Implementing image generation & completed works gallery... --- */
+        /* --- IMAGE GENERATION & GALLERY --- */
+        function generateRobotImage() {
+            const me = getMyData();
+            const text = me.corrected || me.revised || me.draft || "ideal futuristic helper robot";
+
+            const loader = document.getElementById('imageLoader');
+            const placeholder = document.getElementById('imagePlaceholder');
+            const imgEl = document.getElementById('generatedRobotImg');
+
+            if (loader) loader.classList.remove('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (imgEl) imgEl.classList.add('hidden');
+
+            const encodedPrompt = encodeURIComponent(`cute futuristic robot ${text} 3d digital art clear bright background`);
+            const generatedUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=600&height=600&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                me.imageUrl = generatedUrl;
+                if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+
+                if (imgEl) {
+                    imgEl.src = generatedUrl;
+                    imgEl.classList.remove('hidden');
+                }
+                if (loader) loader.classList.add('hidden');
+            };
+            tempImg.onerror = () => {
+                if (loader) loader.classList.add('hidden');
+                if (placeholder) placeholder.classList.remove('hidden');
+                alert('イラスト生成に失敗しました。もう一度お試しください。');
+            };
+            tempImg.src = generatedUrl;
+        }
+
+        function openImageModal(src, caption) {
+            const modal = document.getElementById('imageZoomModal');
+            const img = document.getElementById('modalZoomImage');
+            const cap = document.getElementById('modalZoomCaption');
+
+            if (modal && img) {
+                img.src = src;
+                if (cap) cap.innerText = caption || '作品イラスト';
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageZoomModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function publishFinalWork() {
+            const me = getMyData();
+            me.status = 'published';
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+            alert('完成版作品をクラスギャラリーに投稿しました！');
+            goToStep(7);
+        }
+
+        function renderFinalWorksGallery() {
+            const grid = document.getElementById('finalWorksGalleryGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            window.classStudents.forEach(st => {
+                const isPublished = (st.status === 'published' || st.isModel);
+                if (!isPublished) return;
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3 flex flex-col justify-between ${st.isModel ? 'ring-2 ring-amber-400' : ''}`;
+
+                const myVote = st.votes ? st.votes.find(v => v.voterId === window.currentStudentId) : null;
+                const v1 = myVote ? myVote.c1 : 0;
+                const v2 = myVote ? myVote.c2 : 0;
+                const v3 = myVote ? myVote.c3 : 0;
+
+                const engText = st.corrected || st.revised || st.draft || "This is my ideal robot.";
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between border-b pb-2">
+                            <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center">
+                                ${st.name}
+                                ${st.isModel ? '<span class="ml-1 bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[10px]">お手本</span>' : ''}
+                            </span>
+                            <span class="text-[11px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">完成版</span>
+                        </div>
+
+                        ${st.imageUrl ? `
+                            <div class="relative group cursor-pointer" onclick="openImageModal('${st.imageUrl}', '${st.name} のロボット')">
+                                <img src="${st.imageUrl}" class="w-full h-44 object-cover rounded-lg border border-slate-200" alt="Robot image">
+                                <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                    <i class="fa-solid fa-magnifying-glass-plus mr-1"></i>拡大表示
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="w-full h-32 bg-slate-100 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs">
+                                <i class="fa-solid fa-robot text-2xl mb-1"></i>画像未作成
+                            </div>
+                        `}
+
+                        <p class="text-xs font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 leading-relaxed text-slate-800">
+                            ${engText}
+                        </p>
+
+                        <!-- AUDIO PLAYBACK BUTTON FOR COMPLETED WORK -->
+                        <div class="pt-1">
+                            <button onclick="playStudentAudio(${st.id})" class="w-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow-sm">
+                                <i class="fa-solid fa-volume-high text-indigo-600 mr-1.5"></i>録音音声を聞く（音読再生）
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs pt-2">
+                        <p class="font-bold text-slate-700 flex items-center justify-between">
+                            <span><i class="fa-solid fa-check-to-slot text-amber-500 mr-1"></i>3観点投票 (各1~3点):</span>
+                            ${myVote ? '<span class="text-emerald-600 font-bold text-[11px]"><i class="fa-solid fa-circle-check mr-0.5"></i>投票済み</span>' : '<span class="text-slate-400 font-normal text-[11px]">未投票</span>'}
+                        </p>
+
+                        <div class="grid grid-cols-3 gap-1.5 text-center">
+                            <div>
+                                <label class="block text-[10px] text-slate-600 font-semibold mb-0.5">①困り寄り添い</label>
+                                <select id="voteC1_${st.id}" class="w-full border border-slate-300 rounded p-1 text-xs font-bold text-slate-800">
+                                    <option value="0" ${v1 === 0 ? 'selected' : ''}>--</option>
+                                    <option value="1" ${v1 === 1 ? 'selected' : ''}>1点</option>
+                                    <option value="2" ${v1 === 2 ? 'selected' : ''}>2点</option>
+                                    <option value="3" ${v1 === 3 ? 'selected' : ''}>3点</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-600 font-semibold mb-0.5">②発想・工夫</label>
+                                <select id="voteC2_${st.id}" class="w-full border border-slate-300 rounded p-1 text-xs font-bold text-slate-800">
+                                    <option value="0" ${v2 === 0 ? 'selected' : ''}>--</option>
+                                    <option value="1" ${v2 === 1 ? 'selected' : ''}>1点</option>
+                                    <option value="2" ${v2 === 2 ? 'selected' : ''}>2点</option>
+                                    <option value="3" ${v2 === 3 ? 'selected' : ''}>3点</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-600 font-semibold mb-0.5">③英語の伝わり</label>
+                                <select id="voteC3_${st.id}" class="w-full border border-slate-300 rounded p-1 text-xs font-bold text-slate-800">
+                                    <option value="0" ${v3 === 0 ? 'selected' : ''}>--</option>
+                                    <option value="1" ${v3 === 1 ? 'selected' : ''}>1点</option>
+                                    <option value="2" ${v3 === 2 ? 'selected' : ''}>2点</option>
+                                    <option value="3" ${v3 === 3 ? 'selected' : ''}>3点</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button onclick="submitVoteForStudent(${st.id})" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-1.5 rounded-lg text-xs transition shadow-sm mt-1">
+                            ${myVote ? '投票を更新する' : '投票する'}
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        /* --- PLAY AUDIO FOR ANY STUDENT IN GALLERY --- */
+        function playStudentAudio(studentId) {
+            const st = window.classStudents.find(s => s.id === studentId);
+            if (!st) return;
+
+            if (st.audioUrl) {
+                const audio = new Audio(st.audioUrl);
+                audio.play().catch(e => {
+                    console.error("Audio playback error:", e);
+                    fallbackPlayTtsText(st);
+                });
+            } else {
+                fallbackPlayTtsText(st);
+            }
+        }
+
+        function fallbackPlayTtsText(st) {
+            const textToRead = st.corrected || st.revised || st.draft;
+            if (textToRead && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance(textToRead);
+                uttr.lang = 'en-US';
+                uttr.rate = 0.85;
+                window.speechSynthesis.speak(uttr);
+            } else {
+                alert('音声データが登録されていません。');
+            }
+        }
+
+        function submitVoteForStudent(targetStudentId) {
+            const me = getMyData();
+            if (me.id === targetStudentId) {
+                alert('自分の作品には投票できません。');
+                return;
+            }
+
+            const c1 = parseInt(document.getElementById(`voteC1_${targetStudentId}`).value, 10);
+            const c2 = parseInt(document.getElementById(`voteC2_${targetStudentId}`).value, 10);
+            const c3 = parseInt(document.getElementById(`voteC3_${targetStudentId}`).value, 10);
+
+            if (c1 === 0 || c2 === 0 || c3 === 0) {
+                alert('3つの観点すべてで点数(1~3点)を選択してください。');
+                return;
+            }
+
+            const target = window.classStudents.find(s => s.id === targetStudentId);
+            if (!target) return;
+
+            if (!target.votes) target.votes = [];
+
+            const existingIdx = target.votes.findIndex(v => v.voterId === me.id);
+            if (existingIdx !== -1) {
+                target.votes[existingIdx] = { voterId: me.id, c1, c2, c3 };
+            } else {
+                target.votes.push({ voterId: me.id, c1, c2, c3 });
+            }
+
+            if (window.saveDataToFirestore) {
+                window.saveDataToFirestore(`student_${target.id}`, target);
+            }
+
+            refreshCurrentView();
+            alert(`${target.name} さんの作品に投票しました！（観点①:${c1}点, 観点②:${c2}点, 観点③:${c3}点）`);
+        }
+
+        /* --- STREAMING_CHUNK:Implementing reflections & teacher dashboard views... --- */
+        /* --- REFLECTIONS --- */
+        function switchReflectionHourTab(hour) {
+            const btn1 = document.getElementById('btnRefHourTab1');
+            const btn2 = document.getElementById('btnRefHourTab2');
+            const btn3 = document.getElementById('btnRefHourTab3');
+            const btnRev = document.getElementById('btnRefHourTabReview');
+
+            const p1 = document.getElementById('refPanel1');
+            const p2 = document.getElementById('refPanel2');
+            const p3 = document.getElementById('refPanel3');
+            const pRev = document.getElementById('refPanelReview');
+
+            [p1, p2, p3, pRev].forEach(p => p && p.classList.add('hidden'));
+
+            [btn1, btn2, btn3].forEach(b => b && (b.className = "px-3.5 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition"));
+            if (btnRev) btnRev.className = "px-3.5 py-2 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition";
+
+            if (hour === 1) {
+                if (p1) p1.classList.remove('hidden');
+                if (btn1) btn1.className = "px-3.5 py-2 rounded-lg bg-brand-500 text-white transition shadow-sm font-bold";
+            } else if (hour === 2) {
+                if (p2) p2.classList.remove('hidden');
+                if (btn2) btn2.className = "px-3.5 py-2 rounded-lg bg-purple-600 text-white transition shadow-sm font-bold";
+            } else if (hour === 3) {
+                if (p3) p3.classList.remove('hidden');
+                if (btn3) btn3.className = "px-3.5 py-2 rounded-lg bg-emerald-600 text-white transition shadow-sm font-bold";
+            } else if (hour === 'review') {
+                if (pRev) pRev.classList.remove('hidden');
+                if (btnRev) btnRev.className = "px-3.5 py-2 rounded-lg bg-purple-700 text-white transition shadow-sm font-bold";
+            }
+        }
+
+        function saveStudentReflection() {
+            const me = getMyData();
+            if (!me.reflections) me.reflections = {};
+
+            me.reflections.lesson1 = document.getElementById('refHourText1').value;
+            me.reflections.lesson2 = document.getElementById('refHourText2').value;
+            me.reflections.lesson3 = document.getElementById('refHourText3').value;
+
+            if (window.saveDataToFirestore) window.saveDataToFirestore(`student_${me.id}`, me);
+            refreshCurrentView();
+            alert('振り返りを保存しました！');
+        }
+
+        /* --- TEACHER DASHBOARD --- */
+        function switchTeacherTab(tabName) {
+            const btnStatus = document.getElementById('teacherTabBtnStatus');
+            const btnVoting = document.getElementById('teacherTabBtnVoting');
+            const btnRef = document.getElementById('teacherTabBtnReflection');
+
+            const viewStatus = document.getElementById('teacherTabStatusView');
+            const viewVoting = document.getElementById('teacherTabVotingView');
+            const viewRef = document.getElementById('teacherTabReflectionView');
+
+            [viewStatus, viewVoting, viewRef].forEach(v => v && v.classList.add('hidden'));
+
+            [btnStatus, btnVoting, btnRef].forEach(b => b && (b.className = "flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition text-center font-bold"));
+
+            if (tabName === 'status') {
+                if (viewStatus) viewStatus.classList.remove('hidden');
+                if (btnStatus) btnStatus.className = "flex-1 py-2 rounded-lg bg-brand-500 text-white transition text-center font-bold shadow-sm";
+            } else if (tabName === 'voting') {
+                if (viewVoting) viewVoting.classList.remove('hidden');
+                if (btnVoting) btnVoting.className = "flex-1 py-2 rounded-lg bg-amber-500 text-white transition text-center font-bold shadow-sm";
+                renderTeacherVotingTable();
+            } else if (tabName === 'reflection') {
+                if (viewRef) viewRef.classList.remove('hidden');
+                if (btnRef) btnRef.className = "flex-1 py-2 rounded-lg bg-purple-600 text-white transition text-center font-bold shadow-sm";
+                renderTeacherReflectionTable();
+            }
+        }
+
+        function refreshTeacherData() {
+            refreshCurrentView();
+            alert('最新データに更新しました。');
+        }
+
+        function renderTeacherDashboard() {
+            const grid = document.getElementById('teacherStudentGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const countSpan = document.getElementById('teacherClassStudentCount');
+            if (countSpan) countSpan.innerText = `${window.classStudents.length}名`;
+
+            window.classStudents.forEach(st => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between space-y-3";
+
+                let statusBadge = `<span class="bg-slate-100 text-slate-600 border px-2 py-0.5 rounded text-[10px]">未提出</span>`;
+                if (st.status === 'submitted') {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">確認待ち</span>`;
+                } else if (st.status === 'returned' || st.status === 'published') {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">校正済み・返却済</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-800 text-xs">${st.name}</span>
+                            ${statusBadge}
+                        </div>
+
+                        <div>${getHelpBadgeHtml(st.helpStatus)}</div>
+
+                        <p class="text-xs font-mono bg-slate-50 p-2 rounded border border-slate-200 text-slate-700 leading-relaxed min-h-[50px] max-h-24 overflow-y-auto">
+                            ${st.revised || st.draft || '<span class="text-slate-400 italic">（下書き未作成）</span>'}
+                        </p>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-500">Step: <strong>${st.step || 1}</strong></span>
+                        <button onclick="openTeacherReviewModal(${st.id})" class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-sm flex items-center">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i>確認・添削
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        /* --- PURE MANUAL TEACHER REVIEW MODAL --- */
+        function openTeacherReviewModal(studentId) {
+            activeReviewStudentId = studentId;
+            const st = window.classStudents.find(s => s.id === studentId);
+            if (!st) return;
+
+            document.getElementById('reviewModalTitle').innerText = `${st.name} の提出物確認・手動添削`;
+            document.getElementById('reviewStudentSubmittedText').innerText = st.revised || st.draft || "(未入力)";
+
+            const correctedInput = document.getElementById('reviewCorrectedText');
+            correctedInput.value = st.corrected || st.revised || st.draft || "";
+
+            const adviceInput = document.getElementById('reviewTeacherAdvice');
+            adviceInput.value = st.teacherAdvice || "しっかりと構成を考えて書けていますね！自信を持って音読しましょう。";
+
+            document.getElementById('teacherReviewModal').classList.remove('hidden');
+        }
+
+        function closeTeacherReviewModal() {
+            document.getElementById('teacherReviewModal').classList.add('hidden');
+        }
+
+        function returnCorrectedWorkToStudent() {
+            if (!activeReviewStudentId) return;
+            const st = window.classStudents.find(s => s.id === activeReviewStudentId);
+            if (!st) return;
+
+            const correctedText = document.getElementById('reviewCorrectedText').value.trim();
+            const adviceText = document.getElementById('reviewTeacherAdvice').value.trim();
+
+            if (!correctedText) {
+                alert('返却用校正英文を入力してください。');
+                return;
+            }
+
+            st.corrected = correctedText;
+            st.teacherAdvice = adviceText;
+            st.status = 'returned';
+
+            if (window.saveDataToFirestore) {
+                window.saveDataToFirestore(`student_${st.id}`, st);
+            }
+
+            refreshCurrentView();
+            closeTeacherReviewModal();
+            alert(`${st.name} さんに校正原稿を返却しました！`);
+        }
+
+        /* --- TEACHER VOTING SUMMARY & RANKING --- */
+        function renderTeacherVotingTable() {
+            const tableBody = document.getElementById('teacherVotingSummaryTable');
+            const podiumArea = document.getElementById('teacherTop3Podium');
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '';
+            if (podiumArea) podiumArea.innerHTML = '';
+
+            const rankingList = window.classStudents
+                .filter(st => !st.isModel)
+                .map(st => {
+                    let c1Total = 0, c2Total = 0, c3Total = 0;
+                    const voteCount = st.votes ? st.votes.length : 0;
+
+                    if (st.votes) {
+                        st.votes.forEach(v => {
+                            c1Total += (v.c1 || 0);
+                            c2Total += (v.c2 || 0);
+                            c3Total += (v.c3 || 0);
+                        });
+                    }
+                    const grandTotal = c1Total + c2Total + c3Total;
+                    return { student: st, voteCount, c1Total, c2Total, c3Total, grandTotal };
+                })
+                .sort((a, b) => b.grandTotal - a.grandTotal);
+
+            if (podiumArea && rankingList.length >= 1) {
+                const top3 = rankingList.slice(0, 3);
+                const podiumColors = [
+                    'bg-gradient-to-b from-amber-100 to-amber-50 border-amber-300 text-amber-900',
+                    'bg-gradient-to-b from-slate-100 to-slate-50 border-slate-300 text-slate-800',
+                    'bg-gradient-to-b from-orange-100 to-orange-50 border-orange-300 text-orange-900'
+                ];
+                const podiumTitles = ['🥇 第1位 ベストアイデア賞', '🥈 第2位 優秀賞', '🥉 第3位 優良賞'];
+
+                top3.forEach((item, idx) => {
+                    if (item.grandTotal === 0) return;
+                    const pCard = document.createElement('div');
+                    pCard.className = `p-4 rounded-xl border shadow-sm space-y-2 ${podiumColors[idx]}`;
+                    pCard.innerHTML = `
+                        <div class="font-bold text-xs border-b pb-1 flex justify-between">
+                            <span>${podiumTitles[idx]}</span>
+                            <span>${item.grandTotal}点</span>
+                        </div>
+                        <p class="font-bold text-sm text-slate-900">${item.student.name}</p>
+                        <p class="text-[11px] opacity-80 leading-relaxed font-mono truncate">${item.student.corrected || item.student.revised || item.student.draft}</p>
+                    `;
+                    podiumArea.appendChild(pCard);
+                });
+            }
+
+            rankingList.forEach((item, rankIdx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-2.5 text-center font-bold text-slate-700">${rankIdx + 1}</td>
+                    <td class="p-2.5 font-bold text-slate-800">${item.student.name}</td>
+                    <td class="p-2.5">${item.student.status === 'published' ? '<span class="text-emerald-600 font-bold">投稿済</span>' : '<span class="text-slate-400">未投稿</span>'}</td>
+                    <td class="p-2.5 text-center font-bold text-slate-700">${item.voteCount} 票</td>
+                    <td class="p-2.5 text-center text-brand-700 font-medium">${item.c1Total} 点</td>
+                    <td class="p-2.5 text-center text-purple-700 font-medium">${item.c2Total} 点</td>
+                    <td class="p-2.5 text-center text-emerald-700 font-medium">${item.c3Total} 点</td>
+                    <td class="p-2.5 text-center font-black text-brand-700 bg-brand-50/50 text-sm">${item.grandTotal} 点</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /* --- TEACHER REFLECTION SUMMARY --- */
+        function renderTeacherReflectionTable() {
+            const tableBody = document.getElementById('teacherReflectionTable');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            window.classStudents.forEach(st => {
+                const r1 = st.reflections ? (st.reflections.lesson1 || st.reflections.hour1 || '') : '';
+                const r2 = st.reflections ? (st.reflections.lesson2 || st.reflections.hour2 || '') : '';
+                const r3 = st.reflections ? (st.reflections.lesson3 || st.reflections.hour3 || '') : '';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-800">${st.name}</td>
+                    <td class="p-2.5 text-slate-700 truncate max-w-xs">${r1 || '<span class="text-slate-300 italic">未入力</span>'}</td>
+                    <td class="p-2.5 text-slate-700 truncate max-w-xs">${r2 || '<span class="text-slate-300 italic">未入力</span>'}</td>
+                    <td class="p-2.5 text-slate-700 truncate max-w-xs">${r3 || '<span class="text-slate-300 italic">未入力</span>'}</td>
+                    <td class="p-2.5">
+                        <button onclick="openTeacherReflectionModal(${st.id})" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] px-3 py-1 rounded-lg transition shadow-sm">
+                            確認・評価
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function openTeacherReflectionModal(studentId) {
+            activeReflectionStudentId = studentId;
+            const st = window.classStudents.find(s => s.id === studentId);
+            if (!st) return;
+
+            document.getElementById('refModalStudentTitle').innerText = `${st.name} の振り返り確認・評定`;
+
+            const r1 = st.reflections ? (st.reflections.lesson1 || st.reflections.hour1 || '未入力') : '未入力';
+            const r2 = st.reflections ? (st.reflections.lesson2 || st.reflections.hour2 || '未入力') : '未入力';
+            const r3 = st.reflections ? (st.reflections.lesson3 || st.reflections.hour3 || '未入力') : '未入力';
+
+            document.getElementById('modalRefL1').innerText = r1;
+            document.getElementById('modalRefL2').innerText = r2;
+            document.getElementById('modalRefL3').innerText = r3;
+
+            document.getElementById('modalTeacherRefFeedback').value = (st.reflections && st.reflections.teacherFeedback) ? st.reflections.teacherFeedback : "成長が伝わる素晴らしい振り返りです！";
+
+            document.getElementById('teacherReflectionModal').classList.remove('hidden');
+        }
+
+        function closeTeacherReflectionModal() {
+            document.getElementById('teacherReflectionModal').classList.add('hidden');
+        }
+
+        function saveTeacherReflectionFeedback() {
+            if (!activeReflectionStudentId) return;
+            const st = window.classStudents.find(s => s.id === activeReflectionStudentId);
+            if (!st) return;
+
+            if (!st.reflections) st.reflections = {};
+            st.reflections.teacherFeedback = document.getElementById('modalTeacherRefFeedback').value.trim();
+
+            if (window.saveDataToFirestore) {
+                window.saveDataToFirestore(`student_${st.id}`, st);
+            }
+
+            refreshCurrentView();
+            closeTeacherReflectionModal();
+            alert(`${st.name} さんの振り返りにフィードバックメッセージを届けました！`);
+        }
+
+        /* --- STREAMING_CHUNK:Implementing password management functions... --- */
+        /* --- PASSWORDS & USER SETTINGS --- */
+        function openChangePasswordModal() {
+            document.getElementById('currentPassInput').value = '';
+            document.getElementById('newPassInput').value = '';
+            document.getElementById('confirmNewPassInput').value = '';
+            document.getElementById('changePasswordModal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('hidden');
+        }
+
+        function submitChangePassword() {
+            const currentPass = document.getElementById('currentPassInput').value.trim();
+            const newPass = document.getElementById('newPassInput').value.trim();
+            const confirmPass = document.getElementById('confirmNewPassInput').value.trim();
+
+            if (!newPass || newPass !== confirmPass) {
+                alert('新しいパスワードが一致しないか、空欄になっています。');
+                return;
+            }
+
+            if (window.currentUserRole === 'teacher') {
+                if (currentPass !== window.passwords.teacher) {
+                    alert('現在のパスワードが違います。');
+                    return;
+                }
+                window.passwords.teacher = newPass;
+                alert('先生用パスワードを変更しました。');
+            } else {
+                const me = getMyData();
+                const expected = window.passwords.students[me.id] || '1234';
+                if (currentPass !== expected) {
+                    alert('現在のパスワードが違います。');
+                    return;
+                }
+                window.passwords.students[me.id] = newPass;
+                alert(`${me.name} さんのパスワードを変更しました。`);
+            }
+            closeChangePasswordModal();
+        }
+
+        function openTeacherPasswordsModal() {
+            const tbody = document.getElementById('studentPasswordsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            window.classStudents.forEach(st => {
+                const pass = window.passwords.students[st.id] || '1234';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-2 font-bold text-slate-800">${st.name}</td>
+                    <td class="p-2 font-mono text-purple-700 font-bold">${pass}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('teacherPasswordsModal').classList.remove('hidden');
+        }
+
+        function closeTeacherPasswordsModal() {
+            document.getElementById('teacherPasswordsModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
